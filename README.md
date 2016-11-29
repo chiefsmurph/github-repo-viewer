@@ -3,5 +3,6 @@ views a github user's repos using a variety of front-end frameworks
 
 currently...
 
-* Angular
-* Vue.js
+* Angular 1.5
+* Vue.js (ES5)
+* Incremental Dom + Redux using ES6
