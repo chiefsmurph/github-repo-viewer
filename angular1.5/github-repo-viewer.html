@@ -1,117 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-	<meta charset="UTF-8">
-	<title>Github Repo Viewer</title>
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-	<style>
-		.container {
-			padding-top: 20px;
-		}
-	</style>
-	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js"></script>
+    <meta charset="UTF-8">
+    <title>Github Repo Viewer</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <style>
+        .container {
+            padding-top: 20px;
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js"></script>
 </head>
+
 <body ng-app="githubRepoApp">
 
-	<div ng-controller="GithubRepoCtrl as c" class="container">
+    <div ng-controller="GithubRepoCtrl as c" class="container">
 
-		<h1>Github Repo Viewer</h1>
+        <h1>Github Repo Viewer</h1>
 
-		<username-selector submit-form="c.submitForm(username)"></username-selector>
+        <username-selector submit-form="c.submitForm(username)"></username-selector>
 
-		<hr>
+        <hr>
 
-		<span ng-show="c.error" class="text-danger">{{c.error}}</span>
-		<span ng-show="c.isLoading">Loading repos for that user...</span>
+        <span ng-show="c.error" class="text-danger">{{c.error}}</span>
+        <span ng-show="c.isLoading">Loading repos for that user...</span>
 
-		<div ng-show="c.repos.length">
-			<h2>Repos for <i>{{c.username}}</i></h2>
-			<table class="table table-responsive table-hover">
-				<thead>
-					<th>Name</th>
-					<th>Language</th>
-					<th>URL</th>
-				</thead>
-				<tbody>
-					<tr ng-repeat="repo in c.repos">
-						<td>{{repo.name}}</td>
-						<td>{{repo.language}}</td>
-						<td><a href="{{repo.html_url}}">{{repo.html_url}}</a></td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
+        <div ng-show="c.repos.length">
+            <h2>Repos for <i>{{c.username}}</i></h2>
+            <table class="table table-responsive table-hover">
+                <thead>
+                    <th>Name</th>
+                    <th>Language</th>
+                    <th>URL</th>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="repo in c.repos">
+                        <td>{{repo.name}}</td>
+                        <td>{{repo.language}}</td>
+                        <td><a href="{{repo.html_url}}">{{repo.html_url}}</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
-	</div>
+    </div>
 
-	<script>
-	angular.module('githubRepoApp', [])
+    <script>
+        angular.module('githubRepoApp', [])
 
-	.service('GithubApi', function($http) {
-	  this.getRepos = function(username) {
-	    return $http({
-	      method: 'GET',
-	      url: 'https://api.github.com/users/' + username + '/repos',
-	    });
-	  };
-	})
+        .service('GithubApi', function($http) {
+            this.getRepos = function(username) {
+                return $http({
+                    method: 'GET',
+                    url: 'https://api.github.com/users/' + username + '/repos',
+                });
+            };
+        })
 
-	.controller('GithubRepoCtrl', function($scope, GithubApi) {
-	  var vm = this;
-	  var repoError = function(errorMessage) {
-			vm.isLoading = false;
-	    vm.error = errorMessage;
-	    vm.repos = [];
-	  };
-	  vm.submitForm = function(username) {
+        .controller('GithubRepoCtrl', function($scope, GithubApi) {
+                var vm = this;
+                var repoError = function(errorMessage) {
+                    vm.isLoading = false;
+                    vm.error = errorMessage;
+                    vm.repos = [];
+                };
+                vm.submitForm = function(username) {
 
-			vm.isLoading = true;
-			vm.error = null;
-			vm.repos = [];
+                    vm.isLoading = true;
+                    vm.error = null;
+                    vm.repos = [];
 
-	    GithubApi.getRepos(username).then(function(data) {
+                    GithubApi.getRepos(username).then(function(data) {
 
-				vm.isLoading = false;
+                        vm.isLoading = false;
 
-	      if (data.status != 200) {
-	        return repoError('Error: ' + data.statusText)
-	      } else if (data.data.length === 0) {
-	        return repoError("User exists, but has no repositories.");
-	      } else {
-					vm.username = username;
-	        vm.error = null;
-	        vm.repos = data.data;	// array expected
-	      }
+                        if (data.status != 200) {
+                            return repoError('Error: ' + data.statusText)
+                        } else if (data.data.length === 0) {
+                            return repoError("User exists, but has no repositories.");
+                        } else {
+                            vm.username = username;
+                            vm.error = null;
+                            vm.repos = data.data; // array expected
+                        }
 
-	    }).catch(function(err) {
-	      if (err.status === 404) {
-	        return repoError('No Github user found with that username.');
-	      }
-	      return repoError('Error ' + err.statusText);
-	    });
-	  };
-	})
-	.directive('usernameSelector', function() {
-		return {
-			restrict: 'E',
-			scope: {
-				submitForm: '&',
-			},
-			controller: function($scope) {
-				$scope.submitUsername = function() {
-					if (!$scope.username.length) return;
-					$scope.submitForm({ username: $scope.username });
-					$scope.username = '';
-				};
-			},
-			template: [
-				'<form ng-submit="submitUsername()">',
-					'<input type="text" ng-model="username" placeholder="Enter a Github username" size="35">',
-					'<input value="Get Github Projects" type="submit">',
-				'</form>'
-			].join('\n')
-		};
-	});
-	</script>
+                    }).catch(function(err) {
+                        if (err.status === 404) {
+                            return repoError('No Github user found with that username.');
+                        }
+                        return repoError('Error ' + err.statusText);
+                    });
+                };
+            })
+            .directive('usernameSelector', function() {
+                return {
+                    restrict: 'E',
+                    scope: {
+                        submitForm: '&',
+                    },
+                    controller: function($scope) {
+                        $scope.submitUsername = function() {
+                            if (!$scope.username.length) return;
+                            $scope.submitForm({
+                                username: $scope.username
+                            });
+                            $scope.username = '';
+                        };
+                    },
+                    template: [
+                        '<form ng-submit="submitUsername()">',
+                        '<input type="text" ng-model="username" placeholder="Enter a Github username" size="35">',
+                        '<input value="Get Github Projects" type="submit">',
+                        '</form>'
+                    ].join('\n')
+                };
+            });
+    </script>
 </body>
+
 </html>
