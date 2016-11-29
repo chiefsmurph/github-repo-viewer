@@ -5,4 +5,4 @@ currently...
 
 * Angular 1.5
 * Vue.js (ES5)
-* Incremental Dom + Redux using ES6
+* Incremental Dom + Redux using ES6 and Webpack
