@@ -12,25 +12,25 @@ function appReducer(state, change) {
     state = state || initialState;
     switch(change.type) {
         case 'USERNAME_CHANGE':
-            state = Object.assign({}, state, {
+            state = { ...state,
               username: change.username,
               isLoading: true,
               error: null,
               repos: []
-            });
+            };
             break;
         case 'REPOS_LOADED':
-            state = Object.assign({}, state, {
+            state = { ...state,
               isLoading: false,
               error: null,
               repos: change.repos
-            });
+            };
             break;
         case 'ERROR':
-            state = Object.assign({}, state, {
+            state = { ...state,
               isLoading: false,
               error: change.text
-            });
+            };
     }
     return state;
 }

@@ -29,7 +29,6 @@ function usernameSelector() {
 }
 
 function repoViewer(state) {
-  console.log('state', state);
   return (
     <div id="repoViewer">
       <h2>Repos for <i>{state.username}</i></h2>

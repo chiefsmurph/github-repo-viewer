@@ -18,7 +18,7 @@ module.exports = {
                 include: [path.resolve(__dirname, 'src', 'js')],
                 query: {
                     plugins: ['transform-runtime', "incremental-dom"],
-                    presets: ['es2015']
+                    presets: ['es2015', "stage-2"]
                 }
             },
             {
