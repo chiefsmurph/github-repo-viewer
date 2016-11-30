@@ -21,7 +21,7 @@
 
         <h1>Github Repo Viewer</h1>
 
-        <form onsubmit="submitUsername()">
+        <form onsubmit="app.submitUsername()">
           <input type="text" id="username" placeholder="Enter a Github username" size="35">
           <input value="Get Github Projects" type="submit">
         </form>
@@ -71,84 +71,93 @@
       });
     }
 
-    // dom
-    var domEls = {};
-    ['username', 'usernameLabel', 'error', 'loading', 'repoViewer', 'repoContainer'].forEach(function(el) {
-      domEls[el] = document.getElementById(el);
-    });
+    // app manager
+    var app = (function() {
 
-    // app fns
-    function submitUsername() {
+      // dom
+      var domEls = {};
+      ['username', 'usernameLabel', 'error', 'loading', 'repoViewer', 'repoContainer'].forEach(function(el) {
+        domEls[el] = document.getElementById(el);
+      });
 
-      var typedUsername = domEls.username.value;
-      repoContainer.innerHTML = '';
-
-      reset();
-      show(domEls.loading);
-
-      getRepos(typedUsername).then(function(repos) {
-
-        hide(domEls.loading);
-        domEls.username.value = '';
-        domEls.usernameLabel.textContent = typedUsername;
-
-        if (repos.length) {
-          renderRepos(repos)
-        } else {
-          error("User exists, but has no repositories.");
+      var UI = (function() {
+        var showHideFactory = function(changeVal) {
+          return function(els) {
+            // works for single element or array of elements
+            var changeIndividual = function(el) {
+              domEls[el].style.display = changeVal;
+            };
+            return (!Array.isArray(els)) ? changeIndividual(els) : els.forEach(changeIndividual);
+          };
         }
+        return {
+          hide: showHideFactory("none"),
+          show: showHideFactory("block"),
+          reset: function() {
+            this.hide(['loading', 'error', 'repoViewer']);
+          },
+          renderRepos: function(repos) {
+            var html = repos.map(function(repo) {
+              return [
+                '<tr>',
+                  '<td>' + repo.name + '</td>',
+                  '<td>' + repo.language + '</td>',
+                  '<td><a href="' + repo.html_url + '">' + repo.html_url + '</a></td>',
+                '</tr>'
+              ].join('\n');
+            }).join('\n');
 
-      }).catch(function(err) {
-        reset();
-        error(err.status + ': ' + err.statusText);
-      });
+            repoContainer.innerHTML = html;
+            this.show('repoViewer');
+          },
+          error: function error(text) {
+            domEls.error.textContent = text;
+            this.reset();
+            this.show('error');
+          }
+        };
+      })();
 
-      event.preventDefault();
-    }
+      return {
+        init: function() {
+          UI.reset()
+        },
+        getRepos: function(username) {
+          return new Promise(function(resolve, reject) {
+            makeRequest('GET', 'https://api.github.com/users/' + username + '/repos').then(function(data) {
+              resolve(JSON.parse(data));
+            }).catch(reject);
+          });
+        },
+        submitUsername: function() {
+          var typedUsername = domEls.username.value;
+          repoContainer.innerHTML = '';
+          domEls.username.value = '';
 
+          UI.reset();
+          UI.show('loading');
 
-    function getRepos(username) {
+          this.getRepos(typedUsername).then(function(repos) {
 
-      return new Promise(function(resolve, reject) {
-        makeRequest('GET', 'https://api.github.com/users/' + username + '/repos').then(function(data) {
-          resolve(JSON.parse(data));
-        }).catch(reject);
-      });
-    }
+            UI.hide('loading');
+            domEls.usernameLabel.textContent = typedUsername;
 
-    function renderRepos(repos) {
+            if (!repos.length) {
+              return UI.error("User exists, but has no repositories.");
+            }
 
-      var html = repos.map(function(repo) {
-        return [
-          '<tr>',
-            '<td>' + repo.name + '</td>',
-            '<td>' + repo.language + '</td>',
-            '<td><a href="' + repo.html_url + '">' + repo.html_url + '</a></td>',
-          '</tr>'
-        ].join('\n');
-      }).join('\n');
+            return UI.renderRepos(repos);
 
-      repoContainer.innerHTML = html;
-      show(domEls.repoViewer);
-    }
+          }).catch(function(err) {
+            UI.error(err.status + ': ' + err.statusText);
+          });
 
-    function hide(el) {
-      el.style.display = "none";
-    }
+          event.preventDefault();
+        }
+      };
+    })();
+    app.init();
 
-    function show(el) {
-      el.style.display = "block";
-    }
-
-    function reset() {
-      [domEls.loading, domEls.error, domEls.repoViewer].forEach(hide);
-    }
-
-    function error(text) {
-      domEls.error.textContent = text;
-      show(domEls.error);
-    }
-    reset();
     </script>
 </body>
 
