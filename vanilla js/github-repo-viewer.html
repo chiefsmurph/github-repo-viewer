@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Github Repo Viewer</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <style>
+        .container {
+            padding-top: 20px;
+        }
+        /*#loading, #error {
+          display: none
+        }*/
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Github Repo Viewer</h1>
+
+        <form onsubmit="submitUsername()">
+          <input type="text" id="username" placeholder="Enter a Github username" size="35">
+          <input value="Get Github Projects" type="submit">
+        </form>
+
+        <hr>
+
+        <span id="error" class="text-danger"></span>
+        <span id="loading">Loading repos for that user...</span>
+
+        <div id="repoViewer">
+            <h2>Repos for <i id="usernameLabel"></i></h2>
+            <table class="table table-responsive table-hover">
+                <thead>
+                    <th>Name</th>
+                    <th>Language</th>
+                    <th>URL</th>
+                </thead>
+                <tbody id="repoContainer"></tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script>
+    // ajax helper
+    function makeRequest (method, url) {
+      return new Promise(function (resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        xhr.open(method, url);
+        xhr.onload = function () {
+          if (this.status >= 200 && this.status < 300) {
+            resolve(xhr.response);
+          } else {
+            reject({
+              status: this.status,
+              statusText: xhr.statusText
+            });
+          }
+        };
+        xhr.onerror = function () {
+          reject({
+            status: this.status,
+            statusText: xhr.statusText
+          });
+        };
+        xhr.send();
+      });
+    }
+
+    // dom
+    var domEls = {};
+    ['username', 'usernameLabel', 'error', 'loading', 'repoViewer', 'repoContainer'].forEach(function(el) {
+      domEls[el] = document.getElementById(el);
+    });
+
+    // app fns
+    function submitUsername() {
+
+      var typedUsername = domEls.username.value;
+      repoContainer.innerHTML = '';
+
+      reset();
+      show(domEls.loading);
+
+      getRepos(typedUsername).then(function(repos) {
+
+        hide(domEls.loading);
+        domEls.username.value = '';
+        domEls.usernameLabel.textContent = typedUsername;
+
+        if (repos.length) {
+          renderRepos(repos)
+        } else {
+          error("User exists, but has no repositories.");
+        }
+
+      }).catch(function(err) {
+        reset();
+        error(err.status + ': ' + err.statusText);
+      });
+
+      event.preventDefault();
+    }
+
+
+    function getRepos(username) {
+
+      return new Promise(function(resolve, reject) {
+        makeRequest('GET', 'https://api.github.com/users/' + username + '/repos').then(function(data) {
+          resolve(JSON.parse(data));
+        }).catch(reject);
+      });
+    }
+
+    function renderRepos(repos) {
+
+      var html = repos.map(function(repo) {
+        return [
+          '<tr>',
+            '<td>' + repo.name + '</td>',
+            '<td>' + repo.language + '</td>',
+            '<td><a href="' + repo.html_url + '">' + repo.html_url + '</a></td>',
+          '</tr>'
+        ].join('\n');
+      }).join('\n');
+
+      repoContainer.innerHTML = html;
+      show(domEls.repoViewer);
+    }
+
+    function hide(el) {
+      el.style.display = "none";
+    }
+
+    function show(el) {
+      el.style.display = "block";
+    }
+
+    function reset() {
+      [domEls.loading, domEls.error, domEls.repoViewer].forEach(hide);
+    }
+
+    function error(text) {
+      domEls.error.textContent = text;
+      show(domEls.error);
+    }
+    reset();
+    </script>
+</body>
+
+</html>
