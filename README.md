@@ -6,7 +6,7 @@ currently...
 * Angular 1.5
 * Vue.js (ES5)
 * Incremental Dom + Redux using ES6 and Webpack
-* Vanilla JS with promise'fied XMLHttpRequest's and structured code using the module pattern showing private and public methods
+* Vanilla JS with promise'fied XMLHttpRequest's, code structured using the module pattern showing private and public methods
 
 to do....
 
@@ -14,3 +14,4 @@ to do....
 * react with mobx
 * backbone
 * web components
+* knockout

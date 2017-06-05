@@ -81,7 +81,9 @@
       });
 
       var UI = (function() {
+        // submodule
         var showHideFactory = function(changeVal) {
+          // factory: function that returns a function
           return function(els) {
             // works for single element or array of elements
             var changeIndividual = function(el) {
@@ -95,8 +97,17 @@
           show: showHideFactory("block"),
           reset: function() {
             this.hide(['loading', 'error', 'repoViewer']);
+            repoContainer.innerHTML = '';
+            domEls.username.value = '';
           },
-          renderRepos: function(repos) {
+          renderRepos: function(repos, username) {
+            UI.hide('loading');
+            domEls.usernameLabel.textContent = username;
+
+            if (!repos.length) {
+              return this.error("User exists, but has no repositories.");
+            }
+
             var html = repos.map(function(repo) {
               return [
                 '<tr>',
@@ -107,10 +118,11 @@
               ].join('\n');
             }).join('\n');
 
-            repoContainer.innerHTML = html;
+            domEls.repoContainer.innerHTML = html;
             this.show('repoViewer');
           },
           error: function error(text) {
+            debugger;
             domEls.error.textContent = text;
             this.reset();
             this.show('error');
@@ -131,24 +143,13 @@
         },
         submitUsername: function() {
           var typedUsername = domEls.username.value;
-          repoContainer.innerHTML = '';
-          domEls.username.value = '';
-
           UI.reset();
           UI.show('loading');
 
           this.getRepos(typedUsername).then(function(repos) {
-
-            UI.hide('loading');
-            domEls.usernameLabel.textContent = typedUsername;
-
-            if (!repos.length) {
-              return UI.error("User exists, but has no repositories.");
-            }
-
-            return UI.renderRepos(repos);
-
+            UI.renderRepos(repos, typedUsername);
           }).catch(function(err) {
+            debugger;
             UI.error(err.status + ': ' + err.statusText);
           });
 
